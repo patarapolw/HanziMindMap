@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-import sys
+import sys, os
 
 mainscript = 'HanziMindMap.py'
 setup_requires = ['PyQt5']
@@ -30,7 +30,8 @@ setup(
     version='0.1.0',
     packages=find_packages(),
     data_files=[
-        'HanziMindMap/database'
+        ('HanziMindMap/database',
+         [os.path.join('HanziMindMap/database', f) for f in os.listdir('HanziMindMap/database')])
     ],
     setup_requires=setup_requires,
     install_requires=setup_requires,
