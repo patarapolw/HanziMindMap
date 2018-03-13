@@ -15,8 +15,10 @@ class Database:
             );''')
 
     def submit(self, char_vocab, ass_sound, ass_meaning):
-        self.db.execute('''INSERT INTO user VALUES (?, ?, ?, ?)''',
+        self.db.execute('''INSERT INTO user (id, char_vocab, associated_sounds, associated_meanings) 
+                           VALUES (?, ?, ?, ?)''',
                         (int(time()*1000), char_vocab, ass_sound, ass_meaning))
+        self.db.commit()
 
     def lookup(self, char_vocab):
         cursor = self.db.execute('''SELECT associated_sounds, associated_meanings 
@@ -29,3 +31,4 @@ class Database:
         id_tuple = cursor.fetchone()
         if id_tuple is not None:
             self.db.execute('''DELETE FROM user WHERE id=?;''', id_tuple)
+            self.db.commit()

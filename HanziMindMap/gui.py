@@ -16,6 +16,7 @@ class MainWindow(QWidget):
         self.dict = Cedict()
 
     def closeEvent(self, QCloseEvent):
+        self.db.db.commit()
         self.db.db.close()
         super().closeEvent(QCloseEvent)
 
@@ -36,6 +37,10 @@ class MainWindow(QWidget):
         delete.clicked.connect(self.do_delete)
         clear = QPushButton("Clear")
         clear.clicked.connect(self.do_clear)
+
+        self.char_vocab.returnPressed.connect(self.associated_sounds.setFocus)
+        self.associated_sounds.returnPressed.connect(self.associated_meanings.setFocus)
+        self.associated_meanings.returnPressed.connect(submit.click)
 
         top = QGridLayout()
         top.setColumnStretch(1, 4)
@@ -75,6 +80,19 @@ class MainWindow(QWidget):
             self.associated_sounds.setText(ass_sound)
             self.associated_meanings.setText(ass_meaning)
 
+            color = '#badc58'
+            self.char_vocab.setStyleSheet("background-color: {}".format(color))
+            self.associated_sounds.setStyleSheet("background-color: {}".format(color))
+            self.associated_meanings.setStyleSheet("background-color: {}".format(color))
+        else:
+            self.associated_sounds.setText('')
+            self.associated_meanings.setText('')
+
+            color = '#ffffff'
+            self.char_vocab.setStyleSheet("background-color: {}".format(color))
+            self.associated_sounds.setStyleSheet("background-color: {}".format(color))
+            self.associated_meanings.setStyleSheet("background-color: {}".format(color))
+
         cedict_entry = self.dict.cedict.setdefault(text)
         if cedict_entry is not None:
             self.pinyin.setText(cedict_entry[0]['pinyin'])
@@ -88,6 +106,7 @@ class MainWindow(QWidget):
         self.db.submit(self.char_vocab.text(),
                        self.associated_sounds.text(),
                        self.associated_meanings.text())
+        self.text_changed(self.char_vocab.text())
 
     def do_delete(self):
         self.db.delete(self.char_vocab.text())
