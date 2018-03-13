@@ -14,11 +14,9 @@ class MainWindow(QWidget):
         self.db = Database()
         self.dict = Cedict()
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def closeEvent(self, QCloseEvent):
         self.db.db.close()
+        super().closeEvent(QCloseEvent)
 
     def showUI(self):
         self.char_vocab = QLineEdit()
