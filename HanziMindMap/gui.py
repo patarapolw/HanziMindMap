@@ -32,6 +32,8 @@ class MainWindow(QWidget):
         submit.clicked.connect(self.do_submit)
         delete = QPushButton("Delete")
         delete.clicked.connect(self.do_delete)
+        clear = QPushButton("Clear")
+        clear.clicked.connect(self.do_clear)
 
         top = QGridLayout()
         top.setColumnStretch(1, 4)
@@ -51,6 +53,7 @@ class MainWindow(QWidget):
         bottom.addStretch()
         bottom.addWidget(submit)
         bottom.addWidget(delete)
+        bottom.addWidget(clear)
 
         layout = QVBoxLayout()
         layout.addLayout(top)
@@ -65,8 +68,8 @@ class MainWindow(QWidget):
         lookup = self.db.lookup(text)
         if lookup is not None:
             ass_sound, ass_meaning = lookup
-            self.associated_sound.setText(ass_sound)
-            self.associated_meaning.setText(ass_meaning)
+            self.associated_sounds.setText(ass_sound)
+            self.associated_meanings.setText(ass_meaning)
 
         cedict_entry = self.dict.cedict.setdefault(text)
         if cedict_entry is not None:
@@ -84,3 +87,10 @@ class MainWindow(QWidget):
 
     def do_delete(self):
         self.db.delete(self.char_vocab.text())
+
+    def do_clear(self):
+        self.char_vocab.setText('')
+        self.associated_sounds.setText('')
+        self.associated_meanings.setText('')
+        self.pinyin.setText('')
+        self.meanings.setText('')

@@ -26,5 +26,6 @@ class Database:
     def delete(self, char_vocab):
         cursor = self.db.execute('''SELECT id
                                     FROM user WHERE char_vocab=?;''', (char_vocab, ))
-        if cursor.fetchone() is not None:
-            self.db.execute('''DELETE FROM user WHERE id=?;''', (list(cursor)[0][0], ))
+        id_tuple = cursor.fetchone()
+        if id_tuple is not None:
+            self.db.execute('''DELETE FROM user WHERE id=?;''', id_tuple)
