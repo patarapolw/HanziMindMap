@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget,
                              QLabel, QLineEdit, QPushButton,
                              QHBoxLayout, QVBoxLayout, QGridLayout)
 from PyQt5.Qt import Qt
+from PyQt5.QtCore import QObject, pyqtSignal, QEvent
 
 from HanziMindMap.db import Database
 from HanziMindMap.dict import Cedict
@@ -14,6 +15,8 @@ class MainWindow(QWidget):
         self.setWindowTitle('Hanzi Mind Map')
         self.db = Database()
         self.dict = Cedict()
+        self.meaning_id = 0
+        self.cedict_entry = []
 
     def closeEvent(self, QCloseEvent):
         self.db.db.commit()
@@ -30,6 +33,7 @@ class MainWindow(QWidget):
         self.meanings.setWordWrap(True)
         self.meanings.setAlignment(Qt.AlignTop)
         self.meanings.setFixedHeight(50)
+        clickable(self.meanings).connect(self.next_meaning)
 
         submit = QPushButton("Submit")
         submit.clicked.connect(self.do_submit)
@@ -93,13 +97,19 @@ class MainWindow(QWidget):
             self.associated_sounds.setStyleSheet("background-color: {}".format(color))
             self.associated_meanings.setStyleSheet("background-color: {}".format(color))
 
-        cedict_entry = self.dict.cedict.setdefault(text)
-        if cedict_entry is not None:
-            self.pinyin.setText(cedict_entry[0]['pinyin'])
-            self.meanings.setText(cedict_entry[0]['english'])
+        self.cedict_entry = self.dict.cedict.setdefault(text)
+        if self.cedict_entry is not None:
+            self.meaning_id = 0
+            self.pinyin.setText(self.cedict_entry[self.meaning_id]['pinyin'])
+            self.meanings.setText(self.cedict_entry[self.meaning_id]['english'])
         else:
             self.pinyin.setText('')
             self.meanings.setText('')
+
+    def next_meaning(self):
+        self.meaning_id = (self.meaning_id + 1) % len(self.cedict_entry)
+        self.pinyin.setText(self.cedict_entry[self.meaning_id]['pinyin'])
+        self.meanings.setText(self.cedict_entry[self.meaning_id]['english'])
 
     def do_submit(self):
         self.do_delete()
@@ -117,3 +127,20 @@ class MainWindow(QWidget):
         self.associated_meanings.setText('')
         self.pinyin.setText('')
         self.meanings.setText('')
+
+
+def clickable(widget):
+    class Filter(QObject):
+        clicked = pyqtSignal()
+
+        def eventFilter(self, obj, event):
+            if obj == widget:
+                if event.type() == QEvent.MouseButtonRelease:
+                    if obj.rect().contains(event.pos()):
+                        self.clicked.emit()
+                        return True
+            return False
+
+    filter = Filter(widget)
+    widget.installEventFilter(filter)
+    return filter.clicked
