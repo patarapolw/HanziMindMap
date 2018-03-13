@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import (QApplication, QWidget,
                              QLabel, QLineEdit, QPushButton,
                              QHBoxLayout, QVBoxLayout, QGridLayout)
+from PyQt5.Qt import Qt
 
 from HanziMindMap.db import Database
 from HanziMindMap.dict import Cedict
@@ -25,6 +26,8 @@ class MainWindow(QWidget):
         self.associated_meanings = QLineEdit()
         self.pinyin = QLabel()
         self.meanings = QLabel()
+        self.meanings.setWordWrap(True)
+        self.meanings.setAlignment(Qt.AlignTop)
 
         submit = QPushButton("Submit")
         submit.clicked.connect(self.do_submit)
@@ -71,8 +74,8 @@ class MainWindow(QWidget):
 
         cedict_entry = self.dict.cedict.setdefault(text)
         if cedict_entry is not None:
-            self.pinyin.setText(cedict_entry['pinyin'])
-            self.meanings.setText(cedict_entry['english'])
+            self.pinyin.setText(cedict_entry[0]['pinyin'])
+            self.meanings.setText(cedict_entry[0]['english'])
         else:
             self.pinyin.setText('')
             self.meanings.setText('')

@@ -11,10 +11,13 @@ class Cedict:
                 result = re.search(r'(\w+) (\w+) \[(.+)\] /(.+)/\n', row)
                 if result is not None:
                     trad, simp, pinyin, eng = result.groups()
-                    self.cedict[simp] = {
+                    self.cedict.setdefault(simp, [])
+                    self.cedict.setdefault(trad, [])
+                    self.cedict[simp].append({
                         'traditional': trad,
                         'simplified': simp,
                         'pinyin': pinyin,
                         'english': eng
-                    }
-                    self.cedict[trad] = self.cedict[simp].copy()
+                    })
+                    if trad != simp:
+                        self.cedict[trad].append(self.cedict[simp][-1])
