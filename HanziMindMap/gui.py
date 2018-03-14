@@ -16,7 +16,7 @@ class MainWindow(QWidget):
         self.db = Database()
         self.dict = Cedict()
         self.meaning_id = 0
-        self.cedict_entry = []
+        self.dict_entry = []
 
     def closeEvent(self, QCloseEvent):
         self.db.db.commit()
@@ -55,7 +55,7 @@ class MainWindow(QWidget):
         top.addWidget(self.associated_sounds, 1, 1)
         top.addWidget(QLabel("Associated meaning："), 2, 0)
         top.addWidget(self.associated_meanings, 2, 1)
-        top.addWidget(QLabel('Pinyin：'), 3, 0)
+        top.addWidget(QLabel('Reading：'), 3, 0)
         top.addWidget(self.pinyin, 3, 1)
         label_meanings = QLabel("Meanings：")
         label_meanings.setAlignment(Qt.AlignTop)
@@ -97,19 +97,19 @@ class MainWindow(QWidget):
             self.associated_sounds.setStyleSheet("background-color: {}".format(color))
             self.associated_meanings.setStyleSheet("background-color: {}".format(color))
 
-        self.cedict_entry = self.dict.cedict.setdefault(text)
-        if self.cedict_entry is not None:
+        self.dict_entry = self.dict.dictionary.setdefault(text)
+        if self.dict_entry is not None:
             self.meaning_id = 0
-            self.pinyin.setText(self.cedict_entry[self.meaning_id]['pinyin'])
-            self.meanings.setText(self.cedict_entry[self.meaning_id]['english'])
+            self.pinyin.setText(self.dict_entry[self.meaning_id]['reading'])
+            self.meanings.setText(self.dict_entry[self.meaning_id]['english'])
         else:
             self.pinyin.setText('')
             self.meanings.setText('')
 
     def next_meaning(self):
-        self.meaning_id = (self.meaning_id + 1) % len(self.cedict_entry)
-        self.pinyin.setText(self.cedict_entry[self.meaning_id]['pinyin'])
-        self.meanings.setText(self.cedict_entry[self.meaning_id]['english'])
+        self.meaning_id = (self.meaning_id + 1) % len(self.dict_entry)
+        self.pinyin.setText(self.dict_entry[self.meaning_id]['reading'])
+        self.meanings.setText(self.dict_entry[self.meaning_id]['english'])
 
     def do_submit(self):
         self.do_delete()
@@ -127,6 +127,7 @@ class MainWindow(QWidget):
         self.associated_meanings.setText('')
         self.pinyin.setText('')
         self.meanings.setText('')
+        self.char_vocab.setFocus()
 
 
 def clickable(widget):
