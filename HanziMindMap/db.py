@@ -1,12 +1,12 @@
 import sqlite3
 from time import time
 
-from HanziMindMap.dir import database_path
+from HanziMindMap.dir import resource_path
 
 
 class Database:
     def __init__(self):
-        self.db = sqlite3.connect(database_path("user.db"))
+        self.db = sqlite3.connect(resource_path("user.db"))
         self.db.execute('''CREATE TABLE IF NOT EXISTS user (
                 id          INT PRIMARY KEY NOT NULL,
                 char_vocab          TEXT    NOT NULL,

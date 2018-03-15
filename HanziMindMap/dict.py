@@ -48,3 +48,22 @@ class Edict2:
 
                 if jap != kana:
                     self.dictionary[kana].append(self.dictionary[jap][-1])
+
+
+class SpoonFed:
+    def __init__(self):
+        self.dictionary = dict()
+        with open(database_path('SpoonFed.tsv'), encoding='utf8') as f:
+            for row in f.readlines():
+                eng, reading, sentence, _, sentence_id = row.strip().split('\t')
+                self.dictionary[sentence_id] = {
+                    'id': sentence_id,
+                    'sentence': sentence,
+                    'reading': reading,
+                    'english': eng
+                }
+
+    def search(self, vocab):
+        for entry in self.dictionary.values():
+            if vocab in entry['sentence']:
+                yield entry

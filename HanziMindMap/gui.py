@@ -1,20 +1,22 @@
-from PyQt5.QtWidgets import (QApplication, QWidget,
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget,
                              QLabel, QLineEdit, QPushButton,
                              QHBoxLayout, QVBoxLayout, QGridLayout)
 from PyQt5.Qt import Qt
 from PyQt5.QtCore import QObject, pyqtSignal, QEvent
+import subprocess
 
 from HanziMindMap.db import Database
-from HanziMindMap.dict import Cedict
+from HanziMindMap.dict import Cedict, SpoonFed
 
 
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setGeometry(300, 300, 600, 200)
         self.setWindowTitle('Hanzi Mind Map')
         self.db = Database()
         self.dict = Cedict()
+        self.sentence = SpoonFed()
         self.meaning_id = 0
         self.dict_entry = []
 
@@ -29,11 +31,20 @@ class MainWindow(QWidget):
         self.associated_sounds = QLineEdit()
         self.associated_meanings = QLineEdit()
         self.pinyin = QLabel()
+        clickable(self.pinyin).connect(self.speak)
         self.meanings = QLabel()
         self.meanings.setWordWrap(True)
         self.meanings.setAlignment(Qt.AlignTop)
         self.meanings.setFixedHeight(50)
         clickable(self.meanings).connect(self.next_meaning)
+        self.sen1 = QLabel()
+        self.sen1.setWordWrap(True)
+        self.sen1.setAlignment(Qt.AlignTop)
+        clickable(self.sen1).connect(self.speak_sen1)
+        self.sen2 = QLabel()
+        self.sen2.setWordWrap(True)
+        self.sen2.setAlignment(Qt.AlignTop)
+        clickable(self.sen2).connect(self.speak_sen2)
 
         submit = QPushButton("Submit")
         submit.clicked.connect(self.do_submit)
@@ -61,6 +72,9 @@ class MainWindow(QWidget):
         label_meanings.setAlignment(Qt.AlignTop)
         top.addWidget(label_meanings, 4, 0)
         top.addWidget(self.meanings, 4, 1)
+        top.addWidget(QLabel('Sentences :'), 5, 0)
+        top.addWidget(self.sen1, 5, 1)
+        top.addWidget(self.sen2, 6, 1)
 
         bottom = QHBoxLayout()
         bottom.addStretch()
@@ -72,7 +86,9 @@ class MainWindow(QWidget):
         layout.addLayout(top)
         layout.addLayout(bottom)
 
-        self.setLayout(layout)
+        central = QWidget()
+        central.setLayout(layout)
+        self.setCentralWidget(central)
         self.show()
 
         self.move(QApplication.desktop().screen().rect().center() - self.rect().center())
@@ -98,18 +114,43 @@ class MainWindow(QWidget):
             self.associated_meanings.setStyleSheet("background-color: {}".format(color))
 
         self.dict_entry = self.dict.dictionary.setdefault(text)
+        sentence_iter = self.sentence.search(text)
         if self.dict_entry is not None:
             self.meaning_id = 0
             self.pinyin.setText(self.dict_entry[self.meaning_id]['reading'])
             self.meanings.setText(self.dict_entry[self.meaning_id]['english'])
+            try:
+                s1 = next(sentence_iter)
+                self.sen1.setText(s1['sentence'])
+                self.sen1.setToolTip(s1['english'])
+
+                s2 = next(sentence_iter)
+                self.sen2.setText(s2['sentence'])
+                self.sen2.setToolTip(s2['english'])
+            except StopIteration:
+                pass
         else:
             self.pinyin.setText('')
             self.meanings.setText('')
+
+            self.sen1.setText('')
+            self.sen1.setToolTip('')
+            self.sen2.setText('')
+            self.sen2.setToolTip('')
 
     def next_meaning(self):
         self.meaning_id = (self.meaning_id + 1) % len(self.dict_entry)
         self.pinyin.setText(self.dict_entry[self.meaning_id]['reading'])
         self.meanings.setText(self.dict_entry[self.meaning_id]['english'])
+
+    def speak(self):
+        subprocess.call(['say', '-v', 'ting-ting', self.char_vocab.text()])
+
+    def speak_sen1(self):
+        subprocess.call(['say', '-v', 'ting-ting', self.sen1.text()])
+
+    def speak_sen2(self):
+        subprocess.call(['say', '-v', 'ting-ting', self.sen2.text()])
 
     def do_submit(self):
         self.do_delete()
@@ -127,6 +168,8 @@ class MainWindow(QWidget):
         self.associated_meanings.setText('')
         self.pinyin.setText('')
         self.meanings.setText('')
+        self.sen1.setText('')
+        self.sen2.setText('')
         self.char_vocab.setFocus()
 
 
