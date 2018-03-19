@@ -5,7 +5,7 @@ from PyQt5.Qt import Qt
 
 from HanziMindMap.db import Database
 from HanziMindMap.dict import Cedict, SpoonFed
-from HanziMindMap.gui import clickable, know_char, dump
+from HanziMindMap.qt import clickable, know_char, dump
 from HanziMindMap.util import speak
 
 
