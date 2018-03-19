@@ -64,6 +64,7 @@ class SpoonFed:
                 }
 
     def search(self, vocab):
-        for entry in self.dictionary.values():
-            if vocab in entry['sentence']:
-                yield entry
+        if vocab:
+            for entry in self.dictionary.values():
+                if vocab in entry['sentence']:
+                    yield entry
