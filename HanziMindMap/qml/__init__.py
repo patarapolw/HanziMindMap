@@ -9,11 +9,11 @@ class Main(QObject):
 
 
 def main():
-    global app
+    sys.argv += ['--style', 'fusion']
     app = QGuiApplication(sys.argv)
+
     engine = QQmlApplicationEngine()
     engine.load("qml/main.qml")
-    win = engine.rootObjects()[0]
-    win.show()
     engine.quit.connect(app.quit)
+
     sys.exit(app.exec_())

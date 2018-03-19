@@ -5,7 +5,7 @@ from PyQt5.Qt import Qt
 
 from HanziMindMap.db import Database
 from HanziMindMap.dict import Cedict, SpoonFed
-from HanziMindMap.qt import clickable, know_char, dump
+from HanziMindMap.qt import know_char, dump
 from HanziMindMap.util import speak
 
 
@@ -48,6 +48,8 @@ class MainWindow(QMainWindow):
         super().closeEvent(QCloseEvent)
 
     def showUI(self):
+        from HanziMindMap.qt import clickable
+
         self.char_vocab = QLineEdit()
         self.char_vocab.textChanged.connect(self.text_changed)
         self.associated_sounds = QLineEdit()

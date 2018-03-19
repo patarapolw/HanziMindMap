@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QPushButton,
 from PyQt5.Qt import Qt
 from random import choice
 
-from HanziMindMap.qt import clickable
 from HanziMindMap.util import speak
 
 
