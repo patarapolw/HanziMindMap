@@ -32,3 +32,9 @@ class Database:
         if id_tuple is not None:
             self.db.execute('''DELETE FROM user WHERE id=?;''', id_tuple)
             self.db.commit()
+
+    def __iter__(self):
+        return self.db.execute('SELECT * FROM user')
+
+    def __str__(self):
+        return '\n'.join(['|'.join(['{:>10}'.format(item) for item in row]) for row in self])

@@ -1,24 +1,46 @@
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget,
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QAction,
                              QLabel, QLineEdit, QPushButton,
                              QHBoxLayout, QVBoxLayout, QGridLayout)
 from PyQt5.Qt import Qt
-from PyQt5.QtCore import QObject, pyqtSignal, QEvent
-import subprocess
 
 from HanziMindMap.db import Database
 from HanziMindMap.dict import Cedict, SpoonFed
+from HanziMindMap.gui import clickable, know_char, dump
+from HanziMindMap.util import speak
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setGeometry(300, 300, 600, 200)
-        self.setWindowTitle('Hanzi Mind Map')
         self.db = Database()
-        self.dict = Cedict()
-        self.sentence = SpoonFed()
+        self.dict = {
+            'dict': Cedict(),
+            'sentence': SpoonFed(),
+        }
         self.meaning_id = 0
         self.dict_entry = []
+        self.menubar_action = {
+            'dump': QAction('Dump database', self),
+            'know_char': QAction('Do you know this character?', self)
+        }
+        self.subwindow = None
+
+        self.setGeometry(300, 300, 600, 200)
+        self.setWindowTitle('Hanzi Mind Map')
+        self.create_menubar()
+
+    def create_menubar(self):
+        bar = self.menuBar()
+        file = bar.addMenu("&File")
+        file.addAction(self.menubar_action['dump'])
+        file.addAction(self.menubar_action['know_char'])
+        file.triggered[QAction].connect(self.do_menubar)
+
+    def do_menubar(self, action):
+        if action is self.menubar_action['dump']:
+            self.subwindow = dump.load(self.db)
+        elif action is self.menubar_action['know_char']:
+            self.subwindow = know_char.load(self.db, self.dict)
 
     def closeEvent(self, QCloseEvent):
         self.db.db.commit()
@@ -31,20 +53,19 @@ class MainWindow(QMainWindow):
         self.associated_sounds = QLineEdit()
         self.associated_meanings = QLineEdit()
         self.pinyin = QLabel()
-        clickable(self.pinyin).connect(self.speak)
+        self.pinyin.linkActivated.connect(speak)
         self.meanings = QLabel()
         self.meanings.setWordWrap(True)
         self.meanings.setAlignment(Qt.AlignTop)
         self.meanings.setFixedHeight(50)
         clickable(self.meanings).connect(self.next_meaning)
-        self.sen1 = QLabel()
-        self.sen1.setWordWrap(True)
-        self.sen1.setAlignment(Qt.AlignTop)
-        clickable(self.sen1).connect(self.speak_sen1)
-        self.sen2 = QLabel()
-        self.sen2.setWordWrap(True)
-        self.sen2.setAlignment(Qt.AlignTop)
-        clickable(self.sen2).connect(self.speak_sen2)
+
+        self.sen = []
+        for i in range(2):
+            self.sen.append(QLabel())
+            self.sen[i].setWordWrap(True)
+            self.sen[i].setAlignment(Qt.AlignTop)
+            self.sen[i].linkActivated.connect(speak)
 
         submit = QPushButton("Submit")
         submit.clicked.connect(self.do_submit)
@@ -73,8 +94,8 @@ class MainWindow(QMainWindow):
         top.addWidget(label_meanings, 4, 0)
         top.addWidget(self.meanings, 4, 1)
         top.addWidget(QLabel('Sentences :'), 5, 0)
-        top.addWidget(self.sen1, 5, 1)
-        top.addWidget(self.sen2, 6, 1)
+        top.addWidget(self.sen[0], 5, 1)
+        top.addWidget(self.sen[1], 6, 1)
 
         bottom = QHBoxLayout()
         bottom.addStretch()
@@ -113,44 +134,39 @@ class MainWindow(QMainWindow):
             self.associated_sounds.setStyleSheet("background-color: {}".format(color))
             self.associated_meanings.setStyleSheet("background-color: {}".format(color))
 
-        self.dict_entry = self.dict.dictionary.setdefault(text)
-        sentence_iter = self.sentence.search(text)
+        self.dict_entry = self.dict['dict'].dictionary.setdefault(text)
         if self.dict_entry is not None:
             self.meaning_id = 0
-            self.pinyin.setText(self.dict_entry[self.meaning_id]['reading'])
+            self.pinyin.setText(
+                '<a href="{}">{}</a>'
+                    .format(self.dict_entry[self.meaning_id]['simplified'],
+                            self.dict_entry[self.meaning_id]['reading'])
+            )
             self.meanings.setText(self.dict_entry[self.meaning_id]['english'])
             try:
-                s1 = next(sentence_iter)
-                self.sen1.setText(s1['sentence'])
-                self.sen1.setToolTip(s1['english'])
-
-                s2 = next(sentence_iter)
-                self.sen2.setText(s2['sentence'])
-                self.sen2.setToolTip(s2['english'])
+                for i, s in enumerate(self.dict['sentence'].search(text)):
+                    if i >=2:
+                        break
+                    self.sen[i].setText('<a href="{0}">{0}</a>'.format(s['sentence']))
+                    self.sen[i].setToolTip(s['english'])
             except StopIteration:
                 pass
         else:
             self.pinyin.setText('')
             self.meanings.setText('')
 
-            self.sen1.setText('')
-            self.sen1.setToolTip('')
-            self.sen2.setText('')
-            self.sen2.setToolTip('')
+            for i in range(2):
+                self.sen[i].setText('')
+                self.sen[i].setToolTip('')
 
     def next_meaning(self):
         self.meaning_id = (self.meaning_id + 1) % len(self.dict_entry)
-        self.pinyin.setText(self.dict_entry[self.meaning_id]['reading'])
+        self.pinyin.setText(
+            '<a href="{}">{}</a>'
+                .format(self.dict_entry[self.meaning_id]['simplified'],
+                        self.dict_entry[self.meaning_id]['reading'])
+        )
         self.meanings.setText(self.dict_entry[self.meaning_id]['english'])
-
-    def speak(self):
-        subprocess.call(['say', '-v', 'ting-ting', self.char_vocab.text()])
-
-    def speak_sen1(self):
-        subprocess.call(['say', '-v', 'ting-ting', self.sen1.text()])
-
-    def speak_sen2(self):
-        subprocess.call(['say', '-v', 'ting-ting', self.sen2.text()])
 
     def do_submit(self):
         self.do_delete()
@@ -168,23 +184,6 @@ class MainWindow(QMainWindow):
         self.associated_meanings.setText('')
         self.pinyin.setText('')
         self.meanings.setText('')
-        self.sen1.setText('')
-        self.sen2.setText('')
+        for i in range(2):
+            self.sen[i].setText('')
         self.char_vocab.setFocus()
-
-
-def clickable(widget):
-    class Filter(QObject):
-        clicked = pyqtSignal()
-
-        def eventFilter(self, obj, event):
-            if obj == widget:
-                if event.type() == QEvent.MouseButtonRelease:
-                    if obj.rect().contains(event.pos()):
-                        self.clicked.emit()
-                        return True
-            return False
-
-    filter = Filter(widget)
-    widget.installEventFilter(filter)
-    return filter.clicked

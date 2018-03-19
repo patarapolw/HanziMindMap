@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys
 
-mainscript = 'HanziMindMap.py'
+mainscript = 'HanziMindMap/__main__.py'
 setup_requires = ['PyQt5']
 
 if sys.platform == 'darwin':
@@ -30,7 +30,7 @@ setup(
     version='0.1.0',
     packages=find_packages(),
     data_files=[
-        ('HanziMindMap/database', 'HanziMindMap/database/cedict.txt')
+        ('HanziMindMap/database', ['HanziMindMap/database/cedict.txt', 'HanziMindMap/database/SpoonFed.tsv'])
     ],
     setup_requires=setup_requires,
     install_requires=setup_requires,

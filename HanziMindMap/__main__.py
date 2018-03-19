@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 
-from HanziMindMap.gui import MainWindow
+from HanziMindMap.gui.main import MainWindow
 
 
 def main():
@@ -11,3 +11,7 @@ def main():
     w.showUI()
 
     sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()
