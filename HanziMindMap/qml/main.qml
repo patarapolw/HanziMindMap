@@ -6,16 +6,16 @@ import QtQuick.Controls.Styles 1.4
 
 ApplicationWindow {
     id: root
-    title: "Hanzi Mind Map"
+    title: "Hanzi Brainstorm"
     visible: true
     width: 600
     height: 400
 
     menuBar: MenuBar {
         Menu {
-            title: "&File"
+            title: "Vocabularies"
             MenuItem {
-                text: "Dump database"
+                text: "User database"
                 onTriggered: {
                     console.log(py.dump_database[0][0])
                     var component = Qt.createComponent("dump.qml")
@@ -29,6 +29,10 @@ ApplicationWindow {
                     window.show()
                 }
             }
+        }
+
+        Menu {
+            title: "Hanzi"
             MenuItem {
                 text: "Do you know this character?"
                 onTriggered: {
@@ -57,13 +61,13 @@ ApplicationWindow {
 
             Label { text: "Char/Vocab：" }
             TextField {
-                property Rectangle match_bg: Rectangle { color: "#badc58" }
-                property Rectangle not_match: Rectangle { color: "#ffffff" }
                 property bool match: false
 
                 id: char_vocab
                 Layout.fillWidth: true
-                background: match ? match_bg : not_match
+                background: Rectangle {
+                    color: char_vocab.match ? "#badc58" : "#ffffff"
+                }
                 onTextEdited: {
                     py.text_changed(char_vocab.text)
                     var lookup = JSON.parse(py.lookup)
@@ -105,13 +109,13 @@ ApplicationWindow {
 
             Label { text: "Associated sounds：" }
             TextField {
-                property Rectangle match_bg: Rectangle { color: "#badc58" }
-                property Rectangle not_match: Rectangle { color: "#ffffff" }
                 property bool match: false
 
                 id: ass_sounds
                 Layout.fillWidth: true
-                background: match ? match_bg : not_match
+                background: Rectangle {
+                    color: ass_sounds.match ? "#badc58" : "#ffffff"
+                }
                 onTextEdited: {
                     checkInDatabase()
                 }
@@ -119,13 +123,13 @@ ApplicationWindow {
 
             Label { text: "Associated meanings：" }
             TextField {
-                property Rectangle match_bg: Rectangle { color: "#badc58" }
-                property Rectangle not_match: Rectangle { color: "#ffffff" }
                 property bool match: false
 
                 id: ass_meanings
                 Layout.fillWidth: true
-                background: match ? match_bg : not_match
+                background: Rectangle {
+                    color: ass_meanings.match ? "#badc58" : "#ffffff"
+                }
                 onTextEdited: {
                     checkInDatabase()
                 }
@@ -256,6 +260,12 @@ ApplicationWindow {
         } else {
             ass_sounds.match = false
             ass_meanings.match = false
+        }
+
+        if(char_vocab.text || ass_sounds.text || ass_meanings.text){
+            clear.enabled = true
+        } else {
+            clear.enabled = false
         }
     }
 }

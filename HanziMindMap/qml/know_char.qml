@@ -86,8 +86,8 @@ Window {
         }
     }
 
-    function new_char(char) {
-        character.text = char
+    function new_char(_char) {
+        character.text = _char
         py.text_changed(character.text)
 
         var rel_vocab_text = []
