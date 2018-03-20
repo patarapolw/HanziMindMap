@@ -57,11 +57,13 @@ ApplicationWindow {
 
             Label { text: "Char/Vocab：" }
             TextField {
-                property Rectangle search_found: Rectangle { color: "#badc58" }
-                property Rectangle search_not_found: Rectangle { color: "#ffffff" }
+                property Rectangle match_bg: Rectangle { color: "#badc58" }
+                property Rectangle not_match: Rectangle { color: "#ffffff" }
+                property bool match: false
 
                 id: char_vocab
                 Layout.fillWidth: true
+                background: match ? match_bg : not_match
                 onTextEdited: {
                     py.text_changed(char_vocab.text)
                     var lookup = JSON.parse(py.lookup)
@@ -97,34 +99,36 @@ ApplicationWindow {
                     }
                     sentence.text = sentence_text
 
-                    if(py.found){
-                        char_vocab.background = search_found
-                        remove.enabled = true
-                    } else {
-                        char_vocab.background = search_not_found
-                        remove.enabled = false
-                    }
-
-                    if(char_vocab.text){
-                        submit.enabled = true
-                        clear.enabled = true
-                    } else {
-                        submit.enabled = false
-                        clear.enabled = false
-                    }
+                    checkInDatabase()
                 }
             }
 
             Label { text: "Associated sounds：" }
             TextField {
+                property Rectangle match_bg: Rectangle { color: "#badc58" }
+                property Rectangle not_match: Rectangle { color: "#ffffff" }
+                property bool match: false
+
                 id: ass_sounds
                 Layout.fillWidth: true
+                background: match ? match_bg : not_match
+                onTextEdited: {
+                    checkInDatabase()
+                }
             }
 
             Label { text: "Associated meanings：" }
             TextField {
+                property Rectangle match_bg: Rectangle { color: "#badc58" }
+                property Rectangle not_match: Rectangle { color: "#ffffff" }
+                property bool match: false
+
                 id: ass_meanings
                 Layout.fillWidth: true
+                background: match ? match_bg : not_match
+                onTextEdited: {
+                    checkInDatabase()
+                }
                 onAccepted: {
                     submit.click()
                 }
@@ -219,6 +223,39 @@ ApplicationWindow {
                     char_vocab.text = ass_sounds.text = ass_meanings.text = ""
                 }
             }
+        }
+    }
+
+    function checkInDatabase(){
+        if(py.found){
+            char_vocab.match = true
+            remove.enabled = true
+        } else {
+            char_vocab.match = false
+            remove.enabled = false
+        }
+
+        if(char_vocab.text && (ass_sounds.text || ass_meanings.text)){
+            submit.enabled = true
+        } else {
+            submit.enabled = false
+        }
+
+        var lookup = JSON.parse(py.lookup)
+        if("user" in lookup && lookup.user !== null){
+            if(lookup.user[0] == ass_sounds.text){
+                ass_sounds.match = true
+            } else {
+                ass_sounds.match = false
+            }
+            if(lookup.user[1] == ass_meanings.text){
+                ass_meanings.match = true
+            } else {
+                ass_meanings.match = false
+            }
+        } else {
+            ass_sounds.match = false
+            ass_meanings.match = false
         }
     }
 }

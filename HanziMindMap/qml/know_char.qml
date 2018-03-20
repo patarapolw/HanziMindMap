@@ -26,7 +26,7 @@ Window {
             Text {
                 text: "<a href='#'>Next character</a>"
                 onLinkActivated: {
-                    new_char()
+                    new_char(py.rand_char)
                 }
             }
         }
@@ -68,21 +68,26 @@ Window {
                 Button {
                     id: submit
                     text: "Submit Entry"
+                    enabled: false
                 }
                 Button {
                     id: remove
                     text: "Remove Entry"
+                    enabled: false
                 }
                 Button {
-                    id: clear
-                    text: "Clear"
+                    id: reset
+                    text: "Reset"
+                    onClicked: {
+                        new_char(character.text)
+                    }
                 }
             }
         }
     }
 
-    function new_char() {
-        character.text = py.rand_char
+    function new_char(char) {
+        character.text = char
         py.text_changed(character.text)
 
         var rel_vocab_text = []
@@ -104,6 +109,6 @@ Window {
     }
 
     Component.onCompleted: {
-        new_char()
+        new_char(py.rand_char)
     }
 }
