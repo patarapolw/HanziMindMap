@@ -17,35 +17,48 @@ ApplicationWindow {
             MenuItem {
                 text: "User database"
                 onTriggered: {
-                    console.log(py.dump_database[0][0])
-                    var component = Qt.createComponent("dump.qml")
-                    if( component.status != Component.Ready )
-                    {
-                        if( component.status == Component.Error )
-                            console.debug("Error:"+ component.errorString() );
-                        return; // or maybe throw
-                    }
-                    var window    = component.createObject(root)
-                    window.show()
+                    openNewWindow("vocab_dump.qml")
                 }
+            }
+            MenuSeparator {}
+            MenuItem {
+                text: "Statistics"
+//                onTriggered: {
+//                    openNewWindow("hanzi_know.qml")
+//                }
             }
         }
 
         Menu {
             title: "Hanzi"
             MenuItem {
-                text: "Do you know this character?"
+                text: "Do you know this Hanzi?"
                 onTriggered: {
-                    var component = Qt.createComponent("know_char.qml")
-                    if( component.status != Component.Ready )
-                    {
-                        if( component.status == Component.Error )
-                            console.debug("Error:"+ component.errorString() );
-                        return; // or maybe throw
-                    }
-                    var window    = component.createObject(root)
-                    window.show()
+                    openNewWindow("hanzi_know.qml")
                 }
+            }
+            MenuItem {
+                text: "User database"
+//                onTriggered: {
+//                    openNewWindow("hanzi_know.qml")
+//                }
+            }
+            MenuSeparator {}
+            MenuItem {
+                text: "Statistics"
+//                onTriggered: {
+//                    openNewWindow("hanzi_know.qml")
+//                }
+            }
+        }
+
+        Menu {
+            title: "About"
+            MenuItem {
+                text: "About Hanzi Brainstorm"
+//                onTriggered: {
+//                    openNewWindow("hanzi_know.qml")
+//                }
             }
         }
     }
@@ -66,28 +79,33 @@ ApplicationWindow {
                 id: char_vocab
                 Layout.fillWidth: true
                 background: Rectangle {
+                    border.color: "gray"
                     color: char_vocab.match ? "#badc58" : "#ffffff"
                 }
                 onTextEdited: {
-                    py.text_changed(char_vocab.text)
-                    var lookup = JSON.parse(py.lookup)
+                    pyUserVocab.do_lookup(char_vocab.text)
+                    pyDictVocab.do_lookup(char_vocab.text)
+                    pyDictSentence.do_lookup(char_vocab.text)
+                    var lookup_user = pyUserVocab.get_lookup
+                    var lookup_dictionary = JSON.parse(pyDictVocab.get_lookup)
+                    var lookup_sentence = JSON.parse(pyDictSentence.get_lookup)
 
-                    if(lookup.user){
-                        ass_sounds.text = lookup.user[0]
-                        ass_meanings.text = lookup.user[1]
+                    if(lookup_user.length === 2){
+                        ass_sounds.text = lookup_user[0]
+                        ass_meanings.text = lookup_user[1]
                     } else {
                         ass_sounds.text = ''
                         ass_meanings.text = ''
                     }
 
-                    if(lookup.dictionary){
+                    if(lookup_dictionary.length !== 0){
                         dict_readings.text = "<a href='"+ char_vocab.text + "'>"
-                            + lookup.dictionary[0].reading + "</a>"
-                        dict_meanings.text = lookup.dictionary[0].english + "<br />"
+                            + lookup_dictionary[0].reading + "</a>"
+                        dict_meanings.text = lookup_dictionary[0].english + "<br />"
 
-                        if(lookup.dictionary.length > 1){
+                        if(lookup_dictionary.length > 1){
                             dict_meanings.text += "<br />Meaning " + 1 + " of "
-                                + lookup.dictionary.length + " "
+                                + lookup_dictionary.length + " "
                             dict_meanings.text += "<a href='" + 1 + "'>Next meaning</a>"
                         }
                     } else {
@@ -96,10 +114,10 @@ ApplicationWindow {
                     }
 
                     var sentence_text = ''
-                    for(var i=0; i<lookup.sentence.length; i++){
-                        sentence_text += "<a href='"+ lookup.sentence[i].sentence + "'>"
-                            + lookup.sentence[i].sentence + "</a> "
-                            + lookup.sentence[i].english + "<br />"
+                    for(var i=0; i<lookup_sentence.length; i++){
+                        sentence_text += "<a href='"+ lookup_sentence[i].sentence + "'>"
+                            + lookup_sentence[i].sentence + "</a> "
+                            + lookup_sentence[i].english + "<br />"
                     }
                     sentence.text = sentence_text
 
@@ -114,6 +132,7 @@ ApplicationWindow {
                 id: ass_sounds
                 Layout.fillWidth: true
                 background: Rectangle {
+                    border.color: "gray"
                     color: ass_sounds.match ? "#badc58" : "#ffffff"
                 }
                 onTextEdited: {
@@ -128,6 +147,7 @@ ApplicationWindow {
                 id: ass_meanings
                 Layout.fillWidth: true
                 background: Rectangle {
+                    border.color: "gray"
                     color: ass_meanings.match ? "#badc58" : "#ffffff"
                 }
                 onTextEdited: {
@@ -162,14 +182,14 @@ ApplicationWindow {
                     textFormat: TextEdit.RichText
                     readOnly: true
                     onLinkActivated: {
-                        var lookup = JSON.parse(py.lookup)
+                        var lookup_dictionary = JSON.parse(pyDictVocab.get_lookup)
 
                         dict_readings.text = "<a href='"+ char_vocab.text + "'>"
-                            + lookup.dictionary[link].reading + "</a>"
-                        dict_meanings.text = lookup.dictionary[link].english + "<br />"
+                            + lookup_dictionary[link].reading + "</a>"
+                        dict_meanings.text = lookup_dictionary[link].english + "<br />"
 
                         dict_meanings.text += "<br />Meaning " + (parseInt(link)+1) + " of "
-                            + lookup.dictionary.length + " "
+                            + lookup_dictionary.length + " "
 
                         if(link > 0){
                             dict_meanings.text += "<a href='" + (parseInt(link)-1) + "'>Previous meaning</a> "
@@ -208,7 +228,7 @@ ApplicationWindow {
                 text: "Submit Entry"
                 enabled: false
                 onClicked: {
-                    py.do_submit(char_vocab.text, ass_sounds.text, ass_meanings.text)
+                    pyUserVocab.do_submit(char_vocab.text, ass_sounds.text, ass_meanings.text)
                 }
             }
             Button {
@@ -216,7 +236,7 @@ ApplicationWindow {
                 text: "Remove Entry"
                 enabled: false
                 onClicked: {
-                    py.do_delete(char_vocab.text)
+                    pyUserVocab.do_delete(char_vocab.text)
                 }
             }
             Button {
@@ -230,36 +250,46 @@ ApplicationWindow {
         }
     }
 
+    function openNewWindow(qml) {
+        var component = Qt.createComponent(qml)
+        if( component.status != Component.Ready )
+        {
+            if( component.status == Component.Error )
+                console.debug("Error:"+ component.errorString() );
+            return; // or maybe throw
+        }
+        var window    = component.createObject(root)
+        window.show()
+    }
+
     function checkInDatabase(){
-        if(py.found){
+        var lookup = pyUserVocab.get_lookup
+        if(lookup.length === 2){
             char_vocab.match = true
             remove.enabled = true
+
+            if(lookup[0] == ass_sounds.text){
+                ass_sounds.match = true
+            } else {
+                ass_sounds.match = false
+            }
+            if(lookup[1] == ass_meanings.text){
+                ass_meanings.match = true
+            } else {
+                ass_meanings.match = false
+            }
         } else {
             char_vocab.match = false
             remove.enabled = false
+
+            ass_sounds.match = false
+            ass_meanings.match = false
         }
 
         if(char_vocab.text && (ass_sounds.text || ass_meanings.text)){
             submit.enabled = true
         } else {
             submit.enabled = false
-        }
-
-        var lookup = JSON.parse(py.lookup)
-        if("user" in lookup && lookup.user !== null){
-            if(lookup.user[0] == ass_sounds.text){
-                ass_sounds.match = true
-            } else {
-                ass_sounds.match = false
-            }
-            if(lookup.user[1] == ass_meanings.text){
-                ass_meanings.match = true
-            } else {
-                ass_meanings.match = false
-            }
-        } else {
-            ass_sounds.match = false
-            ass_meanings.match = false
         }
 
         if(char_vocab.text || ass_sounds.text || ass_meanings.text){

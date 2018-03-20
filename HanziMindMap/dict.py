@@ -1,10 +1,14 @@
 import re
+import json
+
+from PyQt5.QtCore import QObject, pyqtSlot, pyqtProperty
 
 from HanziMindMap.dir import database_path
 
 
-class Cedict:
+class Cedict(QObject):
     def __init__(self):
+        super().__init__()
         self.dictionary = dict()
         with open(database_path('cedict.txt'), encoding='utf8') as f:
             for row in f.readlines():
@@ -22,36 +26,23 @@ class Cedict:
                     if trad != simp:
                         self.dictionary[trad].append(self.dictionary[simp][-1])
 
+        self._lookup = []
 
-class Edict2:
+    @pyqtSlot(str)
+    def do_lookup(self, vocab):
+        if vocab in self.dictionary:
+            self._lookup = self.dictionary[vocab]
+        else:
+            self._lookup = []
+
+    @pyqtProperty(str)
+    def get_lookup(self):
+        return json.dumps(self._lookup)
+
+
+class SpoonFed(QObject):
     def __init__(self):
-        self.dictionary = dict()
-        with open(database_path('edict2'), encoding='euc-jp') as f:
-            for row in f.readlines():
-                jap = kana = eng = ''
-                result = re.search(r'(\w+) \[(.+)\] /(.+)/\n', row)
-                if result is None:
-                    result = re.search(r'(\w+) /(.+)/\n', row)
-                    if result is not None:
-                        jap, eng = result.groups()
-                        kana = jap
-                else:
-                    jap, kana, eng = result.groups()
-
-                self.dictionary.setdefault(jap, [])
-                self.dictionary.setdefault(kana, [])
-                self.dictionary[jap].append({
-                    'japanese': jap,
-                    'reading': kana,
-                    'english': eng
-                })
-
-                if jap != kana:
-                    self.dictionary[kana].append(self.dictionary[jap][-1])
-
-
-class SpoonFed:
-    def __init__(self):
+        super().__init__()
         self.dictionary = dict()
         with open(database_path('SpoonFed.tsv'), encoding='utf8') as f:
             for row in f.readlines():
@@ -63,8 +54,18 @@ class SpoonFed:
                     'english': eng
                 }
 
-    def search(self, vocab):
+        self._lookup = []
+
+    def iter_lookup(self, vocab):
         if vocab:
             for entry in self.dictionary.values():
                 if vocab in entry['sentence']:
                     yield entry
+
+    @pyqtSlot(str)
+    def do_lookup(self, vocab):
+        self._lookup = list(self.iter_lookup(vocab))
+
+    @pyqtProperty(str)
+    def get_lookup(self):
+        return json.dumps(self._lookup)

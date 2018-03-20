@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
-import sys
+import sys, os
 
 mainscript = 'HanziMindMap/__main__.py'
-setup_requires = ['PyQt5']
+setup_requires = ['PyQt5', 'google_speech']
 
 if sys.platform == 'darwin':
     setup_requires.append('py2app')
@@ -30,7 +30,9 @@ setup(
     version='0.1.0',
     packages=find_packages(),
     data_files=[
-        ('HanziMindMap/database', ['HanziMindMap/database/cedict.txt', 'HanziMindMap/database/SpoonFed.tsv'])
+        ('HanziMindMap/database', os.listdir('HanziMindMap/database')),
+        ('HanziMindMap/qml',
+         [item for item in os.listdir('HanziMindMap/qml') if os.path.splitext(item)[1] == '.qml'])
     ],
     setup_requires=setup_requires,
     install_requires=setup_requires,
