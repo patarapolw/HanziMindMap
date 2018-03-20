@@ -1,4 +1,4 @@
-from HanziMindMap.qt import main
+from HanziMindMap.qml import main
 
 if __name__ == '__main__':
     main()
