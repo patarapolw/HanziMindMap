@@ -2,7 +2,6 @@ import QtQuick 2.7
 import QtQuick.Controls 2.3
 import QtQuick.Window 2.2
 import QtQuick.Layouts 1.3
-import QtQuick.Controls.Styles 1.4
 
 ApplicationWindow {
     id: root
@@ -154,7 +153,10 @@ ApplicationWindow {
                     checkInDatabase()
                 }
                 onAccepted: {
-                    submit.click()
+                    submit.checkable = true
+                    submit.checked = true
+                    submit.checked = false
+                    submit.checkable = false
                 }
             }
 
@@ -191,13 +193,15 @@ ApplicationWindow {
                         dict_meanings.text += "<br />Meaning " + (parseInt(link)+1) + " of "
                             + lookup_dictionary.length + " "
 
+                        var line_next_meaning = ''
                         if(link > 0){
-                            dict_meanings.text += "<a href='" + (parseInt(link)-1) + "'>Previous meaning</a> "
+                            line_next_meaning += "<a href='" + (parseInt(link)-1) + "'>Previous meaning</a> "
                         }
 
-                        if(link < lookup.dictionary.length-1){
-                            dict_meanings.text += "<a href='" + (parseInt(link)+1) + "'>Next meaning</a>"
+                        if(link < lookup_dictionary.length-1){
+                            line_next_meaning += "<a href='" + (parseInt(link)+1) + "'>Next meaning</a>"
                         }
+                        dict_meanings.text += line_next_meaning
                     }
                 }
             }
@@ -229,6 +233,9 @@ ApplicationWindow {
                 enabled: false
                 onClicked: {
                     pyUserVocab.do_submit(char_vocab.text, ass_sounds.text, ass_meanings.text)
+                    char_vocab.match = true
+                    ass_sounds.match = true
+                    ass_meanings.match = true
                 }
             }
             Button {
@@ -237,6 +244,9 @@ ApplicationWindow {
                 enabled: false
                 onClicked: {
                     pyUserVocab.do_delete(char_vocab.text)
+                    char_vocab.match = false
+                    ass_sounds.match = false
+                    ass_meanings.match = false
                 }
             }
             Button {
@@ -245,6 +255,9 @@ ApplicationWindow {
                 enabled: false
                 onClicked: {
                     char_vocab.text = ass_sounds.text = ass_meanings.text = ""
+                    char_vocab.match = false
+                    ass_sounds.match = false
+                    ass_meanings.match = false
                 }
             }
         }

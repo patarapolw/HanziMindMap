@@ -93,15 +93,28 @@ Window {
                     id: submit
                     text: "Submit Entry"
                     enabled: false
+                    onClicked: {
+                        pyUserHanzi.do_submit(character.text, rel_char.text, rel_vocab.text)
+                        character.match = true
+                        rel_char.match = true
+                        rel_vocab.match = true
+                    }
                 }
                 Button {
                     id: remove
                     text: "Remove Entry"
                     enabled: false
+                    onClicked: {
+                        pyUserHanzi.do_delete(character.text)
+                        character.match = false
+                        rel_char.match = false
+                        rel_vocab.match = false
+                    }
                 }
                 Button {
                     id: reset
                     text: "Reset"
+                    enabled: false
                     onClicked: {
                         new_char(character.text)
                     }
@@ -167,12 +180,14 @@ Window {
             rel_vocab.match = false
         }
 
-        if(rel_char.text || rel_vocab.text){
+        if(rel_char.text){
             submit.enabled = true
             clear.enabled = true
+            reset.enabled = true
         } else {
             submit.enabled = false
             clear.enabled = false
+            reset.enabled = false
         }
     }
 

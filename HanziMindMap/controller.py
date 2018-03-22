@@ -4,8 +4,8 @@ import sqlite3
 from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtQml import QQmlApplicationEngine
 
-from HanziMindMap.db import UserVocab, UserHanzi
-from HanziMindMap.dict import Cedict, SpoonFed
+from HanziMindMap.user import UserVocab, UserHanzi
+from HanziMindMap.db import Cedict, SpoonFed
 from HanziMindMap.utils import Utils
 from HanziMindMap.dir import resource_path
 

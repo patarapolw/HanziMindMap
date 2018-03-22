@@ -1,118 +1,71 @@
-from time import time
-from random import choice
+import re
+import json
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtProperty
 
+from HanziMindMap.dir import database_path
 
-class UserVocab(QObject):
-    TABLE = 'user'
 
-    def __init__(self, db):
+class Cedict(QObject):
+    def __init__(self):
         super().__init__()
-        self.db = db
-        self.db.execute('''CREATE TABLE IF NOT EXISTS {} (
-                id          INT PRIMARY KEY NOT NULL,
-                char_vocab          TEXT    NOT NULL,
-                associated_sounds   TEXT,
-                associated_meanings TEXT
-            );'''.format(self.TABLE))
-        self.db.commit()
+        self.dictionary = dict()
+        with open(database_path('cedict.txt'), encoding='utf8') as f:
+            for row in f.readlines():
+                result = re.search(r'(\w+) (\w+) \[(.+)\] /(.+)/\n', row)
+                if result is not None:
+                    trad, simp, pinyin, eng = result.groups()
+                    self.dictionary.setdefault(simp, [])
+                    self.dictionary.setdefault(trad, [])
+                    self.dictionary[simp].append({
+                        'traditional': trad,
+                        'simplified': simp,
+                        'reading': pinyin,
+                        'english': eng
+                    })
+                    if trad != simp:
+                        self.dictionary[trad].append(self.dictionary[simp][-1])
 
         self._lookup = []
 
-    def __iter__(self):
-        return self.db.execute('SELECT * FROM {}'.format(self.TABLE))
-
-    @pyqtSlot(str, str, str)
-    def do_submit(self, char_vocab, ass_sound, ass_meaning):
-        self.do_delete(char_vocab)
-        self.db.execute('''INSERT INTO {} (id, char_vocab, associated_sounds, associated_meanings) 
-                           VALUES (?, ?, ?, ?)'''.format(self.TABLE),
-                        (int(time()*1000), char_vocab, ass_sound, ass_meaning))
-        self.db.commit()
-
     @pyqtSlot(str)
-    def do_lookup(self, char_vocab):
-        cursor = self.db.execute('''SELECT associated_sounds, associated_meanings 
-                                    FROM {} WHERE char_vocab=?;'''.format(self.TABLE), (char_vocab, ))
-        self._lookup = cursor.fetchone()
-
-    @pyqtProperty(list)
-    def get_lookup(self):
-        if self._lookup:
-            return list(self._lookup)
+    def do_lookup(self, vocab):
+        if vocab in self.dictionary:
+            self._lookup = self.dictionary[vocab]
         else:
-            return []
-
-    @pyqtSlot(str)
-    def do_delete(self, char_vocab):
-        cursor = self.db.execute('''SELECT id FROM {} WHERE char_vocab=?;'''.format(self.TABLE)
-                                 , (char_vocab, ))
-        id_tuple = cursor.fetchone()
-        if id_tuple is not None:
-            self.db.execute('''DELETE FROM {} WHERE id=?;'''.format(self.TABLE), id_tuple)
-            self.db.commit()
-
-    @pyqtProperty(list)
-    def get_dump(self):
-        return [list(item) for item in self]
+            self._lookup = []
 
     @pyqtProperty(str)
-    def get_rand_char(self):
-        chars = ''.join([''.join([str(data) for data in item]) for item in self])
-        return choice([char for char in chars if u'\u4e00' <= char <= u'\u9fff'])
+    def get_lookup(self):
+        return json.dumps(self._lookup)
 
 
-class UserHanzi(QObject):
-    TABLE = 'user_hanzi'
-
-    def __init__(self, db):
+class SpoonFed(QObject):
+    def __init__(self):
         super().__init__()
-        self.db = db
-        self.db.execute('''CREATE TABLE IF NOT EXISTS {} (
-                id        INT PRIMARY KEY NOT NULL,
-                char      TEXT NOT NULL,
-                rel_char  TEXT,
-                rel_vocab TEXT
-            );'''.format(self.TABLE))
-        self.db.commit()
+        self.dictionary = dict()
+        with open(database_path('SpoonFed.tsv'), encoding='utf8') as f:
+            for row in f.readlines():
+                eng, reading, sentence, _, sentence_id = row.strip().split('\t')
+                self.dictionary[sentence_id] = {
+                    'id': sentence_id,
+                    'sentence': sentence,
+                    'reading': reading,
+                    'english': eng
+                }
 
         self._lookup = []
 
-    def __iter__(self):
-        return self.db.execute('SELECT * FROM {}'.format(self.TABLE))
-
-    @pyqtSlot(str, str, str)
-    def do_submit(self, char, rel_char, rel_vocab):
-        self.do_delete(char)
-        self.db.execute('''INSERT INTO {} (id, char, rel_char, rel_vocab) 
-                               VALUES (?, ?, ?, ?)'''.format(self.TABLE),
-                        (int(time() * 1000), char, rel_char, rel_vocab))
-        self.db.commit()
+    def iter_lookup(self, vocab):
+        if vocab:
+            for entry in self.dictionary.values():
+                if vocab in entry['sentence']:
+                    yield entry
 
     @pyqtSlot(str)
-    def do_lookup(self, char):
-        cursor = self.db.execute('''SELECT rel_char, rel_vocab FROM {} WHERE char=?;'''.format(self.TABLE)
-                                 , (char,))
-        self._lookup = cursor.fetchone()
-
-    @pyqtProperty(list)
-    def get_lookup(self):
-        if self._lookup:
-            return list(self._lookup)
-        else:
-            return []
-
-    @pyqtSlot(str)
-    def do_delete(self, char):
-        cursor = self.db.execute('''SELECT id FROM {} WHERE char=?;'''.format(self.TABLE)
-                                 , (char,))
-        id_tuple = cursor.fetchone()
-        if id_tuple is not None:
-            self.db.execute('''DELETE FROM {} WHERE id=?;'''.format(self.TABLE)
-                            , id_tuple)
-            self.db.commit()
+    def do_lookup(self, vocab):
+        self._lookup = list(self.iter_lookup(vocab))
 
     @pyqtProperty(str)
-    def get_dump(self):
-        return [list(item) for item in self]
+    def get_lookup(self):
+        return json.dumps(self._lookup)
